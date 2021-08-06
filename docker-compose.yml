@@ -1,0 +1,33 @@
+version: "3.8"
+services:
+  website:
+    build: ./website
+    ports:
+      - "3001:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_URLS_API=http://localhost:4000
+    volumes:
+      - './website:/app'
+      - '/app/node_modules'
+
+  urls:
+    build: ./urls
+    links:
+      - "scraper"
+    ports:
+      - "4000:4000"
+    command:
+      - "-mongoURI"
+      - "mongodb://db:27017/"
+
+  scraper:
+    build: ./scraper
+    ports:
+      - "4001:4001"
+    command:
+      - "-mongoURI"
+      - "mongodb://db:27017/"
+
+  db:
+    image: mongo:4.2.11
