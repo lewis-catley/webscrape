@@ -1,0 +1,54 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  URLS_IMAGE_NAME: "webscrape-urls"
+  SCRAPER_IMAGE_NAME: "webscrape-scraper"
+  WEBSITE_IMAGE_NAME: "webscrape-website"
+
+jobs:
+  github-registry:
+    name: "Build"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.REG_PAT }}
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      - name: Build and push urls microservice
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          context: ./urls/
+          file: ./urls/Dockerfile-prod
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ env.URLS_IMAGE_NAME }}:${{ steps.get_version.outputs.VERSION }}
+      - name: Build and push website microservice
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          context: ./website/
+          file: ./website/Dockerfile-prod
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ env.WEBSITE_IMAGE_NAME }}:${{ steps.get_version.outputs.VERSION }}
+      - name: Build and push scraper microservice
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          context: ./scraper/
+          file: ./scraper/Dockerfile-prod
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ env.SCRAPER_IMAGE_NAME }}:${{ steps.get_version.outputs.VERSION }}
