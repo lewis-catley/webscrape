@@ -1,0 +1,30 @@
+FROM golang:1.16-alpine AS builder
+
+# create user
+RUN adduser -D -g '' runner
+
+WORKDIR /app
+
+COPY go.mod ./
+COPY go.sum ./
+
+RUN go mod download && go mod verify
+# copy the source files
+COPY . .
+
+RUN go build -o ./out/scraper ./cmd/app
+
+# Let's build a small image
+FROM alpine:3.14.1
+LABEL language="golang"
+
+# import user from builder
+COPY --from=builder /etc/passwd /etc/passwd
+
+# copy the executable
+COPY --from=builder --chown=runner:1000 /app/out/scraper /scraper
+
+# run as non-root user
+USER runner
+
+ENTRYPOINT ["./scraper"]

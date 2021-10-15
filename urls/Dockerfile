@@ -9,5 +9,5 @@ RUN go mod download
 # copy the source files
 COPY . .
 
-RUN go build -o ./out/webscrape-urls ./cmd/app
-ENTRYPOINT ["./out/webscrape-urls"]
+RUN go build -o ./out/urls ./cmd/app
+ENTRYPOINT ["./out/urls"]
